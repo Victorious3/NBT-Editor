@@ -129,11 +129,16 @@ public class TagLeaf implements TagNodeBase
 		}
 	}
 	
-	public String getValue()
+	public String getValueAsString()
 	{
 		if(value instanceof byte[]) return Arrays.toString((byte[])value);
 		else if(value instanceof int[]) return Arrays.toString((int[])value);
 		else return value.toString();
+	}
+	
+	public Object getValue()
+	{
+		return value;
 	}
 	
 	@Override

@@ -1,8 +1,17 @@
 package vic.nbt;
 
+import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
+import javax.swing.JEditorPane;
+import javax.swing.JOptionPane;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
@@ -30,13 +39,56 @@ public class EventListener implements ActionListener
 		{
 			NBTEditor.open();
 		}
-		else if(e.getSource() == NBTEditor.itemCopy)
+		else if(e.getSource() == NBTEditor.itemCopy || e.getSource() == NBTEditor.itemCut)
 		{
 			NBTEditor.copy();
 		}
 		else if(e.getSource() == NBTEditor.itemPaste)
 		{
 			NBTEditor.paste();
+		}
+		else if(e.getSource() == NBTEditor.itemAbout)
+		{
+			JEditorPane editor = new JEditorPane();
+			editor.setContentType("text/html");
+			editor.setEditable(false);
+			editor.setBackground(new Color(0, 0, 0, 0));
+			editor.setOpaque(false);
+			editor.setText(
+				"<center><b>NBT Editor made by Victorious3</b></center><hr>" +
+				"Version: " + NBTEditor.version + "<br/>" +
+				"GitHub: <a href='https://github.com/Victorious3/NBT-Editor'>https://github.com/Victorious3/NBT-Editor</a><br/>" +
+				"Icon set: Silk from <a href='http://www.famfamfam.com/lab/icons/silk/'>www.famfamfam.com</a><br/>" +
+				"Inspired by NBTEdit &copy copygirl <a href='http://www.minecraftforum.net/topic/6661-nbtedit/'>original thread</a><br/>" +
+				"Uses a modified version of JNBT &copy <a href='http://jnbt.sourceforge.net/'>Graham Edgecombe</a><br/>" +
+				"<hr><center><a href='http://creativecommons.org/licenses/by-nc-sa/4.0/'><img src='http://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png'/></a></center>"
+			);
+			editor.addHyperlinkListener(new HyperlinkListener() 
+			{	
+				@Override
+				public void hyperlinkUpdate(HyperlinkEvent e) 
+				{
+					if(e.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
+					{
+						try {
+							Desktop.getDesktop().browse(e.getURL().toURI());
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						} catch (URISyntaxException e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+			});
+			JOptionPane.showMessageDialog(NBTEditor.frame, editor, "About", JOptionPane.PLAIN_MESSAGE);
+		}
+		else if(e.getSource() == NBTEditor.itemFind)
+		{
+			NBTEditor.search();
+		}
+		else if(e.getSource() == NBTEditor.itemFindNext)
+		{
+			NBTEditor.searchNext(false);
 		}
 		else if(e.getSource() == NBTEditor.itemReload)
 		{
@@ -54,7 +106,12 @@ public class EventListener implements ActionListener
 		{
 			NBTEditor.saveAs();
 		}
-		else if(e.getSource() == NBTEditor.itemDelete|| e.getSource() == NBTEditor.buttonDelete)
+		else if(e.getSource() == NBTEditor.itemQuit)
+		{
+			NBTEditor.frame.dispatchEvent(new WindowEvent(NBTEditor.frame, WindowEvent.WINDOW_CLOSING));
+		}
+		
+		if(e.getSource() == NBTEditor.itemDelete || e.getSource() == NBTEditor.buttonDelete || e.getSource() == NBTEditor.itemCut)
 		{
 			TagNodeBase node = (TagNodeBase)NBTEditor.nbtTree.getLastSelectedPathComponent();
 			int index = node.getParent().getIndex(node);
@@ -123,11 +180,12 @@ public class EventListener implements ActionListener
 			}
 			
 			TagNode parent = ((TagNode)NBTEditor.nbtTree.getLastSelectedPathComponent());
-			TreePath path = new TreePath(((DefaultTreeModel)NBTEditor.nbtTree.getModel()).getPathToRoot(parent));
 			parent.addNode(node);
+			TreePath path = new TreePath(((DefaultTreeModel)NBTEditor.nbtTree.getModel()).getPathToRoot(node));
 			((DefaultTreeModel)NBTEditor.nbtTree.getModel()).nodeChanged(parent);
 			((DefaultTreeModel)NBTEditor.nbtTree.getModel()).nodesWereInserted(parent, new int[]{parent.getIndex(node)});
-			if(!NBTEditor.nbtTree.isExpanded(path)) NBTEditor.nbtTree.expandPath(path);
+			NBTEditor.nbtTree.setSelectionPath(path);
+			NBTEditor.nbtTree.startEditingAtPath(path);
 			
 			NBTEditor.modified = true;
 			NBTEditor.updateName();

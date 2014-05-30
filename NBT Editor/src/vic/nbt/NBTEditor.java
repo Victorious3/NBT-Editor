@@ -2,6 +2,9 @@ package vic.nbt;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,16 +12,21 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Vector;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -61,8 +69,10 @@ public class NBTEditor
 	
 	public static JTree nbtTree;
 	public static TagNodeBase copy;
+	public static String version = "0.0r01";
 	
 	public static File file;
+	public static File lastDirectory;
 	public static boolean modified = false;
 	
 	public static void main(String[] args) 
@@ -75,6 +85,20 @@ public class NBTEditor
 		}
 		
 		frame = new JFrame();
+		frame.addWindowListener(new WindowAdapter() 
+		{
+			@Override
+			public void windowClosing(WindowEvent e) 
+			{
+				if(modified)
+				{
+					int result = JOptionPane.showConfirmDialog(frame, "File " + (file != null ? ("\"" + file.getName() + "\" ") : "") + "has been modified. Save file?", "Save", JOptionPane.YES_NO_CANCEL_OPTION);
+					if(result == JOptionPane.YES_OPTION) save();
+					else if(result == JOptionPane.NO_OPTION) System.exit(0);
+				}
+				else System.exit(0);
+			}	
+		});
 		frame.setSize(500, 400);
 		
 		menuBar = new JMenuBar();
@@ -336,6 +360,7 @@ public class NBTEditor
 			public void valueChanged(TreeSelectionEvent e) 
 			{
 				updateUI();
+				nbtTree.scrollPathToVisible(e.getNewLeadSelectionPath());
 			}
 		});
 		nbtTree.addMouseListener(new MouseAdapter() 
@@ -355,7 +380,7 @@ public class NBTEditor
 		panel1.add(new JScrollPane(nbtTree), BorderLayout.CENTER);
 		frame.add(menuBar, BorderLayout.PAGE_START);
 		frame.add(panel1, BorderLayout.CENTER);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		
 		updateName();
 		frame.setVisible(true);
@@ -370,7 +395,7 @@ public class NBTEditor
 		edit.setTitle("Edit value... (" + node.getName() + ")");
 		edit.setModal(true);
 		
-		final JTextField field = new JTextField(node.getValue());
+		final JTextField field = new JTextField(node.getValueAsString());
 		field.setSelectionStart(0);
 		field.setSelectionEnd(field.getText().length());
 		field.setPreferredSize(new Dimension(250, 25));
@@ -395,6 +420,132 @@ public class NBTEditor
 		edit.pack();
 		edit.setLocationRelativeTo(frame);
 		edit.setVisible(true);
+	}
+	
+	public static String valueFilter = "";
+	public static String nameFilter = "";
+	public static NodeFilter nodeFiler = NodeFilter.FILTER_ALL;
+	
+	public static void search()
+	{
+		final JDialog dialog = new JDialog(frame, "Find...", true);
+		dialog.setLayout(new GridBagLayout());
+		
+		final JTextField fieldName = new JTextField(nameFilter);
+		final JTextField fieldValue = new JTextField(valueFilter);
+		final JComboBox<NodeFilter> comboFilter = new JComboBox<NodeFilter>(new Vector<NodeFilter>(NodeFilter.ALL_FILTERS));
+		comboFilter.setSelectedItem(nodeFiler);
+		
+		ActionListener listener = new ActionListener() 
+		{
+			@Override
+			public void actionPerformed(ActionEvent e) 
+			{
+				dialog.dispose();
+				nameFilter = fieldName.getText();
+				valueFilter = fieldValue.getText();
+				nodeFiler = (NodeFilter)comboFilter.getSelectedItem();
+				updateUI();
+				searchNext(true);
+			}
+		};
+		
+		dialog.addWindowListener(new WindowAdapter() 
+		{
+			@Override
+			public void windowClosing(WindowEvent e) 
+			{
+				nameFilter = fieldName.getText();
+				valueFilter = fieldValue.getText();
+				nodeFiler = (NodeFilter)comboFilter.getSelectedItem();
+				updateUI();
+				searchNext(true);
+			}		
+		});
+		
+		fieldName.addActionListener(listener);
+		fieldValue.addActionListener(listener);
+		
+		GridBagConstraints gbConstraints = new GridBagConstraints();
+		gbConstraints.fill = GridBagConstraints.BOTH;
+		gbConstraints.anchor = GridBagConstraints.EAST;
+		gbConstraints.weightx = 0;
+		gbConstraints.weighty = 1;
+		
+		gbConstraints.insets = new Insets(5, 5, 0, 5);
+		dialog.add(new JLabel("Name:"), gbConstraints);
+		gbConstraints.gridy = 1;
+		dialog.add(new JLabel("Value:"), gbConstraints);
+		gbConstraints.gridy = 2;
+		gbConstraints.insets = new Insets(5, 5, 5, 5);
+		dialog.add(new JLabel("Tags:"), gbConstraints);
+
+		gbConstraints.gridx = 1;
+		gbConstraints.gridy = 0;
+		gbConstraints.insets = new Insets(5, 0, 0, 5);
+		dialog.add(fieldName, gbConstraints);
+		gbConstraints.gridy = 1;
+		dialog.add(fieldValue, gbConstraints);
+		gbConstraints.gridy = 2;
+		gbConstraints.insets = new Insets(5, 0, 5, 5);
+		dialog.add(comboFilter, gbConstraints);
+		
+		dialog.pack();
+		dialog.setLocationRelativeTo(frame);
+		dialog.setVisible(true);
+	}
+	
+	public static void searchNext(boolean startFromRoot)
+	{
+		TagNodeBase node = (TagNodeBase)nbtTree.getLastSelectedPathComponent();
+		if(startFromRoot) node = (TagNodeBase)nbtTree.getModel().getRoot();
+		
+		TagNodeBase node2 = searchTreeDeeper(node);
+		if(node2 != null) nbtTree.setSelectionPath(new TreePath(((DefaultTreeModel)nbtTree.getModel()).getPathToRoot(node2)));
+		else if(startFromRoot) JOptionPane.showMessageDialog(frame, "Can't find any results for search query.", "Not found", JOptionPane.INFORMATION_MESSAGE);
+		else
+		{
+			node = (TagNodeBase)nbtTree.getModel().getRoot();
+			node2 = searchTreeDeeper(node);
+			if(node2 != null) nbtTree.setSelectionPath(new TreePath(((DefaultTreeModel)nbtTree.getModel()).getPathToRoot(node2)));
+			else JOptionPane.showMessageDialog(frame, "Can't find any results for search query.", "Not found", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+	
+	private static TagNodeBase searchTreeDeeper(TagNodeBase node)
+	{
+		if(nodeFiler.accept(node))
+		{
+			if((nameFilter.length() > 0 && node.getName().matches(".*" + nameFilter + ".*") && !(node.getParent() instanceof ListTagNode)) || nameFilter.length() == 0)
+			{
+				if((valueFilter.length() > 0 && node instanceof TagLeaf && Utils.compare(((TagLeaf)node).getValue(), valueFilter)) || valueFilter.length() == 0) 
+				{	
+					if(nbtTree.getLastSelectedPathComponent() != node) return node;
+				}
+			}
+		}
+		if(node instanceof TagNode && node.getChildCount() > 0)
+		{
+			TagNodeBase node2 = searchTreeDeeper((TagNodeBase)node.getChildAt(0));
+			if(nbtTree.getLastSelectedPathComponent() != node2) return node2;
+		}
+		if(node.getParent() != null)
+		{		
+			TagNodeBase node2 = searchTreeHigher(node);
+			if(node2 != null) return searchTreeDeeper(node2);
+		}
+		return null;
+	}
+	
+	private static TagNodeBase searchTreeHigher(TagNodeBase node)
+	{
+		if(node.getParent() == null) return null;	
+		if(node.getParent().getChildCount() > node.getParent().getIndex(node) + 1)
+		{
+			TagNodeBase node2 = (TagNodeBase)node.getParent().getChildAt(node.getParent().getIndex(node) + 1);
+			return node2;
+		}
+		return searchTreeHigher((TagNodeBase)node.getParent());
 	}
 	
 	public static void copy()
@@ -427,7 +578,7 @@ public class NBTEditor
 	{
 		if(modified)
 		{
-			int result = JOptionPane.showConfirmDialog(frame, "File has been modified. Save file?", "Save", JOptionPane.YES_NO_CANCEL_OPTION);
+			int result = JOptionPane.showConfirmDialog(frame, "File " + (file != null ? ("\"" + file.getName() + "\" ") : "") + "has been modified. Save file?", "Save", JOptionPane.YES_NO_CANCEL_OPTION);
 			if(result == JOptionPane.YES_OPTION)
 			{
 				save();
@@ -435,14 +586,15 @@ public class NBTEditor
 			else if(result == JOptionPane.CANCEL_OPTION) return;
 		}
 		
-		JFileChooser chooser = new JFileChooser();
+		JFileChooser chooser = new JFileChooser(lastDirectory);
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("NamedBinaryTag (*.nbt)", "nbt");
 		chooser.addChoosableFileFilter(filter);
 		chooser.setDialogTitle("Open...");
 		chooser.setVisible(true); 
 
 		int result = chooser.showOpenDialog(frame);
-
+		lastDirectory = chooser.getCurrentDirectory();
+		
 		if(result == JFileChooser.APPROVE_OPTION) 
 		{
 			file = chooser.getSelectedFile();
@@ -454,7 +606,7 @@ public class NBTEditor
 	{
 		if(modified)
 		{
-			int result = JOptionPane.showConfirmDialog(frame, "File has been modified. Save file?", "Save", JOptionPane.YES_NO_CANCEL_OPTION);
+			int result = JOptionPane.showConfirmDialog(frame, "File " + (file != null ? ("\"" + file.getName() + "\" ") : "") + "has been modified. Save file?", "Save", JOptionPane.YES_NO_CANCEL_OPTION);
 			if(result == JOptionPane.YES_OPTION)
 			{
 				save();
@@ -478,7 +630,6 @@ public class NBTEditor
 			{
 				node.addNode(generateNode(tag2));			
 			}
-			node.sortNodes();
 			return node;
 		}
 		else if(tag instanceof ListTag)
@@ -504,19 +655,23 @@ public class NBTEditor
 			NBTInputStream is = new NBTInputStream(new FileInputStream(file));
 			CompoundTag tag = (CompoundTag)is.readTag();
 			CompoundTagNode node = (CompoundTagNode)generateNode(tag);
-			node.sortNodes();
 			((DefaultTreeModel)nbtTree.getModel()).setRoot(node);
+			modified = false;
 			updateName();
 			updateUI();
 			is.close();
 		} catch (GZIPException e) {
-			file = null;
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(frame, "Error while opening file " + file.getName() + ":\nGZIPException You tried to open a file that is not in GZIP format.", "Error", JOptionPane.ERROR_MESSAGE);
-		} catch (IOException e) {
 			file = null;
+		} catch (IOException e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(frame, "Error while opening file " + file.getName() + ":\nIOException Maybe the file is missing or damadged.", "Error", JOptionPane.ERROR_MESSAGE);
+			file = null;
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(frame, "Error while opening file " + file.getName() + ":\n" + e.getClass().getSimpleName() + " " + e.getLocalizedMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			file = null;
 		} 
 	}
 	
@@ -542,7 +697,7 @@ public class NBTEditor
 	
 	public static void saveAs()
 	{
-		JFileChooser chooser = new JFileChooser();
+		JFileChooser chooser = new JFileChooser(lastDirectory);
 		chooser.setSelectedFile(new File("unnamed.nbt"));
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("NamedBinaryTag (*.nbt)", "nbt");
 		chooser.addChoosableFileFilter(filter);
@@ -565,6 +720,7 @@ public class NBTEditor
 			}
 			save();
 		}
+		lastDirectory = chooser.getCurrentDirectory();
 	}
 	
 	public static void updateName()
@@ -582,6 +738,9 @@ public class NBTEditor
 			nbtTree.setSelectionPath(new TreePath(nbtTree.getModel().getRoot()));
 		}
 		
+		if(nameFilter.length() == 0 && valueFilter.length() == 0) itemFindNext.setEnabled(false);
+		else itemFindNext.setEnabled(true);
+		
 		if(file == null) itemReload.setEnabled(false);
 		else itemReload.setEnabled(true);
 		
@@ -598,7 +757,7 @@ public class NBTEditor
 		{
 			buttonDelete.setEnabled(true);
 			itemDelete.setEnabled(true);
-			itemCut.setEnabled(false);
+			itemCut.setEnabled(true);
 		}
 		
 		if(node instanceof TagLeaf)

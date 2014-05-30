@@ -4,6 +4,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 
 import javax.imageio.ImageIO;
@@ -81,5 +82,19 @@ public class Utils
 			extension = file.getName().substring(i + 1);
 		}
 		return extension;
+	}
+	
+	public static boolean compare(Object o1, String o2)
+	{
+		if(o1 instanceof Number)
+		{
+			try {
+				return new BigDecimal(o1.toString()).equals(new BigDecimal(o2));
+			} catch (Exception e) {
+				return false;
+			}
+		}
+		else if(o1 instanceof byte[] || o1 instanceof int[]) return false;
+		else return o1.toString().equals(o2);
 	}
 }

@@ -50,14 +50,8 @@ public class CompoundTagNode implements TagNode
 		values.add(node);
 		names.add(node.getName());
 		node.setParent(this);
-		Collections.sort(values, new NodeComperator(true));
-		
+		Collections.sort(values, new NodeComperator());
 		return this;
-	}
-	
-	public void sortNodes()
-	{
-		Collections.sort(values, new NodeComperator(true));
 	}
 	
 	@Override
@@ -156,9 +150,7 @@ public class CompoundTagNode implements TagNode
 	
 	private static class NodeComperator implements Comparator<TagNodeBase>
 	{
-		private static ArrayList<Integer> order = new ArrayList<Integer>();
-		private boolean sortNames;
-		
+		private static ArrayList<Integer> order = new ArrayList<Integer>();		
 		static
 		{
 			//Just because TYPE_INT_ARRAY had to be after TYPE_COMPOUND...
@@ -176,11 +168,6 @@ public class CompoundTagNode implements TagNode
 			order.add(NBTConstants.TYPE_COMPOUND);
 		}
 		
-		public NodeComperator(boolean sortNames)
-		{
-			this.sortNames = sortNames;
-		}
-		
 		@Override
 		public int compare(TagNodeBase o1, TagNodeBase o2)
 		{
@@ -188,19 +175,11 @@ public class CompoundTagNode implements TagNode
 			{
 				if(order.indexOf(((ListTagNode)o1).getTagType()) > order.indexOf(((ListTagNode)o2).getTagType())) return 1;
 				if(order.indexOf(((ListTagNode)o1).getTagType()) < order.indexOf(((ListTagNode)o2).getTagType())) return -1;
-				else if(sortNames)
-				{
-					return o1.getName().compareTo(o2.getName());
-				}				
-				else return 0;
+				else return o1.getName().compareToIgnoreCase(o2.getName());
 			}
 			if(order.indexOf(o1.getType()) > order.indexOf(o2.getType())) return 1;
 			if(order.indexOf(o1.getType()) < order.indexOf(o2.getType())) return -1;
-			else if(sortNames)
-			{
-				return o1.getName().compareTo(o2.getName());
-			}
-			else return 0;
+			else return o1.getName().compareToIgnoreCase(o2.getName());
 		}		
 	}
 
