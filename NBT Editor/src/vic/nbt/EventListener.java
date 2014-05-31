@@ -47,6 +47,15 @@ public class EventListener implements ActionListener
 		{
 			NBTEditor.paste();
 		}
+		else if(e.getSource() == NBTEditor.itemMoveUp || e.getSource() == NBTEditor.itemMoveDown)
+		{
+			int i = e.getSource() == NBTEditor.itemMoveUp ? -1 : 1;
+			TagNodeBase node = (TagNodeBase)NBTEditor.nbtTree.getLastSelectedPathComponent();
+			ListTagNode parent = (ListTagNode)node.getParent();
+			parent.changeDestination(node, parent.getIndex(node) + i);
+			((DefaultTreeModel)NBTEditor.nbtTree.getModel()).nodeStructureChanged(parent);
+			NBTEditor.nbtTree.setSelectionPath(new TreePath(((DefaultTreeModel)NBTEditor.nbtTree.getModel()).getPathToRoot(node)));
+		}
 		else if(e.getSource() == NBTEditor.itemAbout)
 		{
 			JEditorPane editor = new JEditorPane();

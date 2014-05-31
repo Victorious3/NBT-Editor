@@ -55,6 +55,12 @@ public class ListTagNode implements TagNode
 		return this;
 	}
 	
+	public void changeDestination(TagNodeBase node, int newDestination)
+	{
+		value.remove(node);
+		value.add(newDestination, node);
+	}
+	
 	@Override
 	public Enumeration children() 
 	{

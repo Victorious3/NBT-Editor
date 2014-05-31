@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Toolkit;
+import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -69,7 +70,7 @@ public class NBTEditor
 	
 	public static JTree nbtTree;
 	public static TagNodeBase copy;
-	public static String version = "0.0r01";
+	public static String version = "1.1r02";
 	
 	public static File file;
 	public static File lastDirectory;
@@ -85,6 +86,7 @@ public class NBTEditor
 		}
 		
 		frame = new JFrame();
+		new DropTarget(frame, new DropListener());
 		frame.addWindowListener(new WindowAdapter() 
 		{
 			@Override
@@ -156,10 +158,6 @@ public class NBTEditor
 		itemFind.addActionListener(EventListener.instance);
 		itemFindNext.addActionListener(EventListener.instance);
 		itemAbout.addActionListener(EventListener.instance);
-		
-		//I have no idea what these are used for. If you have an idea what these do in the original NBTEdit then tell me.
-		itemMoveUp.setEnabled(false);
-		itemMoveDown.setEnabled(false);
 		
 		JMenu menuFile = new JMenu("File");
 		JMenu menuEdit = new JMenu("Edit");
@@ -257,18 +255,6 @@ public class NBTEditor
 				menuTagList.show(buttonTagList, 0, 0 + buttonTagList.getHeight());
 			}
 		});
-		
-		//Sorry but KeyEvent.VK_CIRCUMFLEX doesn't work. At least not on a german keyboard ;)
-		/*buttonTagByte.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_CIRCUMFLEX, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagShort.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagInt.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagLong.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagFloat.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagDouble.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagByteArray.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_6, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagIntArray.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_7, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagString.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_8, InputEvent.CTRL_DOWN_MASK), "keyStroke");
-		buttonTagCompound.getInputMap(JButton.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK), "keyStroke");*/
 
 		menuTagList = new JPopupMenu();
 		
@@ -295,18 +281,6 @@ public class NBTEditor
 		itemTagString.addActionListener(EventListener.instance);
 		itemTagList.addActionListener(EventListener.instance);
 		itemTagCompound.addActionListener(EventListener.instance);
-		
-		/*itemTagByte.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_CIRCUMFLEX, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagShort.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagInt.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagLong.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagFloat.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagDouble.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagByteArray.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_6, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagIntArray.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_7, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagString.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_8, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagList.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_9, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-		itemTagCompound.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));*/
 		
 		menuTagList.add(itemTagByte);
 		menuTagList.add(itemTagShort);
@@ -346,11 +320,17 @@ public class NBTEditor
 		panel1.add(toolBar, BorderLayout.PAGE_START);
 		
 		nbtTree = new JTree(new CompoundTagNode("root"));
+		
 		//You don't have to tell me that this is ugly.
 		nbtTree.getInputMap().getParent().remove(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
 		nbtTree.getInputMap().getParent().remove(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+		nbtTree.getInputMap().getParent().remove(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_DOWN_MASK));
+		nbtTree.getInputMap().getParent().remove(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_DOWN_MASK));
 		nbtTree.getInputMap().remove(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
 		nbtTree.getInputMap().remove(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+		nbtTree.getInputMap().remove(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_DOWN_MASK));
+		nbtTree.getInputMap().remove(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_DOWN_MASK));
+		
 		nbtTree.setSelectionPath(new TreePath(nbtTree.getModel().getRoot()));
 		nbtTree.setCellRenderer(new TagNodeRenderer());
 		nbtTree.setCellEditor(new TagNodeCellEditor(nbtTree, nbtTree.getCellRenderer()));
@@ -773,6 +753,19 @@ public class NBTEditor
 		
 		if(node.getParent() != null && node.getParent() instanceof ListTagNode) 
 		{
+			if(node.getParent().getChildCount() >= 2)
+			{
+				if(node.getParent().getIndex(node) > 0) itemMoveUp.setEnabled(true);
+				else itemMoveUp.setEnabled(false);
+				
+				if(node.getParent().getIndex(node) < node.getParent().getChildCount() - 1) itemMoveDown.setEnabled(true);
+				else itemMoveDown.setEnabled(false);
+			}
+			else
+			{
+				itemMoveUp.setEnabled(false);
+				itemMoveDown.setEnabled(false);
+			}
 			buttonRename.setEnabled(false);
 			itemRename.setEnabled(false);
 		}
@@ -780,6 +773,8 @@ public class NBTEditor
 		{
 			buttonRename.setEnabled(true);
 			itemRename.setEnabled(true);
+			itemMoveUp.setEnabled(false);
+			itemMoveDown.setEnabled(false);
 		}
 		
 		buttonTagByte.setEnabled(true);
