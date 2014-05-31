@@ -11,17 +11,17 @@ import org.jnbt.NBTConstants;
 
 public class TagNodeRenderer extends DefaultTreeCellRenderer
 {
-	public static Icon iconByte = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/bullet_black.png"));
-	public static Icon iconShort = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/bullet_red.png"));
-	public static Icon iconInt = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/bullet_orange.png"));
-	public static Icon iconLong = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/bullet_yellow.png"));
-	public static Icon iconFloat = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/bullet_pink.png"));
-	public static Icon iconDouble = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/bullet_purple.png"));
-	public static Icon iconByteArray = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/arrows_black.png"));
-	public static Icon iconIntArray = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/arrows_orange.png"));
-	public static Icon iconString = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/text_smallcaps.png"));
-	public static Icon iconList = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/note.png"));
-	public static Icon iconCompound = new ImageIcon(Utils.getImageFromJar("/vic/nbt/resources/package.png"));
+	public static Icon iconByte = new ImageIcon(Utils.getImage("/vic/nbt/resources/bullet_black.png"));
+	public static Icon iconShort = new ImageIcon(Utils.getImage("/vic/nbt/resources/bullet_red.png"));
+	public static Icon iconInt = new ImageIcon(Utils.getImage("/vic/nbt/resources/bullet_orange.png"));
+	public static Icon iconLong = new ImageIcon(Utils.getImage("/vic/nbt/resources/bullet_yellow.png"));
+	public static Icon iconFloat = new ImageIcon(Utils.getImage("/vic/nbt/resources/bullet_pink.png"));
+	public static Icon iconDouble = new ImageIcon(Utils.getImage("/vic/nbt/resources/bullet_purple.png"));
+	public static Icon iconByteArray = new ImageIcon(Utils.getImage("/vic/nbt/resources/arrows_black.png"));
+	public static Icon iconIntArray = new ImageIcon(Utils.getImage("/vic/nbt/resources/arrows_orange.png"));
+	public static Icon iconString = new ImageIcon(Utils.getImage("/vic/nbt/resources/text_smallcaps.png"));
+	public static Icon iconList = new ImageIcon(Utils.getImage("/vic/nbt/resources/note.png"));
+	public static Icon iconCompound = new ImageIcon(Utils.getImage("/vic/nbt/resources/package.png"));
 	
 	@Override
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) 

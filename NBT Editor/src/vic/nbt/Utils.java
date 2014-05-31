@@ -4,6 +4,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 
@@ -23,13 +24,27 @@ public class Utils
 		}
 		return null;
 	}
-	
-	public static BufferedImage getImageFromJar(String s)
+
+	public static BufferedImage getImage(String s)
 	{
-		try {
-			return ImageIO.read(getFileFromJar(s));
-		} catch (IOException e) {
-			e.printStackTrace();
+		if(s.startsWith("/"))
+		{
+			try {
+				InputStream in = Utils.class.getResourceAsStream(s);
+				BufferedImage img = ImageIO.read(in);
+				in.close();
+				return img;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			try {
+				return ImageIO.read(new File(s));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		return null;
 	}
